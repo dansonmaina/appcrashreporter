@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!--
+        WhatsApp share intent in CrashHandler launches com.whatsapp.
+        Android 11+ requires a package visibility declaration for queries/startActivity to work.
+    -->
+    <queries>
+        <package android:name="com.whatsapp" />
+    </queries>
+
+</manifest>
