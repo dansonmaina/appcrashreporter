@@ -38,16 +38,23 @@ android {
         exclude 'META-INF/LICENSE'
         exclude 'META-INF/LICENSE.txt'
     }
+
+    publishing {
+        singleVariant('release') {
+            withSourcesJar()
+        }
+    }
 }
 
-afterEvaluate {
-    publishing {
-        publications {
-            release(MavenPublication) {
+publishing {
+    publications {
+        release(MavenPublication) {
+            groupId    = 'com.github.dansonmaina'
+            artifactId = 'crashreport'
+            version    = '1.0.0'
+
+            afterEvaluate {
                 from components.release
-                groupId    = 'com.github.dansonmaina'  // replaced by JitPack automatically
-                artifactId = 'crashreport'
-                version    = '1.0.0'
             }
         }
     }
