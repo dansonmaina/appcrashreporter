@@ -91,21 +91,16 @@ public class CrashReportDatabase extends SQLiteOpenHelper {
     // ── Developer ────────────────────────────────────────────────────────────
 
     public void insertDeveloper(Developer dev) {
-        try (SQLiteDatabase db = getWritableDatabase()) {
-            db.insert(TABLE_DEVELOPER, null, developerToContentValues(dev));
-        }
+        getWritableDatabase().insert(TABLE_DEVELOPER, null, developerToContentValues(dev));
     }
 
     public void deleteAllDevelopers() {
-        try (SQLiteDatabase db = getWritableDatabase()) {
-            db.delete(TABLE_DEVELOPER, null, null);
-        }
+        getWritableDatabase().delete(TABLE_DEVELOPER, null, null);
     }
 
     public ArrayList<Developer> getAllDevelopers() {
         ArrayList<Developer> list = new ArrayList<>();
-        try (SQLiteDatabase db = getReadableDatabase();
-             Cursor c = db.query(TABLE_DEVELOPER, null, null, null, null, null, null)) {
+        try (Cursor c = getReadableDatabase().query(TABLE_DEVELOPER, null, null, null, null, null, null)) {
             while (c.moveToNext()) {
                 list.add(developerFromCursor(c));
             }
@@ -119,11 +114,9 @@ public class CrashReportDatabase extends SQLiteOpenHelper {
     }
 
     public void updateTelegramChatId(String developerPhone, String chatId) {
-        try (SQLiteDatabase db = getWritableDatabase()) {
-            ContentValues cv = new ContentValues();
-            cv.put("telegramChatId", chatId);
-            db.update(TABLE_DEVELOPER, cv, "developerPhone=?", new String[]{developerPhone});
-        }
+        ContentValues cv = new ContentValues();
+        cv.put("telegramChatId", chatId);
+        getWritableDatabase().update(TABLE_DEVELOPER, cv, "developerPhone=?", new String[]{developerPhone});
     }
 
     public void clearTelegramChatId(String developerPhone) {
@@ -161,37 +154,31 @@ public class CrashReportDatabase extends SQLiteOpenHelper {
     // ── TelegramUser ─────────────────────────────────────────────────────────
 
     public void insertOrReplaceTelegramUser(TelegramUser user) {
-        try (SQLiteDatabase db = getWritableDatabase()) {
-            ContentValues cv = new ContentValues();
-            cv.put("chatId",    user.chatId);
-            cv.put("firstName", user.firstName);
-            cv.put("lastName",  user.lastName);
-            db.insertWithOnConflict(TABLE_TELEGRAM_USER, null, cv,
-                    SQLiteDatabase.CONFLICT_REPLACE);
-        }
+        ContentValues cv = new ContentValues();
+        cv.put("chatId",    user.chatId);
+        cv.put("firstName", user.firstName);
+        cv.put("lastName",  user.lastName);
+        getWritableDatabase().insertWithOnConflict(TABLE_TELEGRAM_USER, null, cv,
+                SQLiteDatabase.CONFLICT_REPLACE);
     }
 
     public void deleteTelegramUserByChatId(String chatId) {
-        try (SQLiteDatabase db = getWritableDatabase()) {
-            db.delete(TABLE_TELEGRAM_USER, "chatId=?", new String[]{chatId});
-        }
+        getWritableDatabase().delete(TABLE_TELEGRAM_USER, "chatId=?", new String[]{chatId});
     }
 
     // ── CrashReport ──────────────────────────────────────────────────────────
 
     public void insertCrashReport(CrashReport report) {
-        try (SQLiteDatabase db = getWritableDatabase()) {
-            ContentValues cv = new ContentValues();
-            cv.put("app_name",        report.app_name);
-            cv.put("client_name",     report.client_name);
-            cv.put("time",            report.time);
-            cv.put("android_version", report.android_version);
-            cv.put("app_version",     report.app_version);
-            cv.put("device_info",     report.device_info);
-            cv.put("crash_report",    report.crash_report);
-            cv.put("app_code",        report.app_code);
-            cv.put("ticket_priority", report.ticket_priority);
-            db.insert(TABLE_CRASH_REPORT, null, cv);
-        }
+        ContentValues cv = new ContentValues();
+        cv.put("app_name",        report.app_name);
+        cv.put("client_name",     report.client_name);
+        cv.put("time",            report.time);
+        cv.put("android_version", report.android_version);
+        cv.put("app_version",     report.app_version);
+        cv.put("device_info",     report.device_info);
+        cv.put("crash_report",    report.crash_report);
+        cv.put("app_code",        report.app_code);
+        cv.put("ticket_priority", report.ticket_priority);
+        getWritableDatabase().insert(TABLE_CRASH_REPORT, null, cv);
     }
 }
