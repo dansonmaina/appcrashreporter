@@ -12,4 +12,5 @@ public class CrashReport implements Serializable {
     public String device_info;
     public String crash_report;
     public String app_code;
+    public String ticket_priority;
 }

@@ -19,7 +19,7 @@ import java.util.ArrayList;
 public class CrashReportDatabase extends SQLiteOpenHelper {
 
     private static final String DB_NAME    = "danzig_crashreport.db";
-    private static final int    DB_VERSION = 2;
+    private static final int    DB_VERSION = 3;
 
     static final String TABLE_DEVELOPER     = "developer_table";
     static final String TABLE_CRASH_REPORT  = "crash_report_table";
@@ -73,7 +73,8 @@ public class CrashReportDatabase extends SQLiteOpenHelper {
                 + "app_version     TEXT,"
                 + "device_info     TEXT,"
                 + "crash_report    TEXT,"
-                + "app_code        TEXT"
+                + "app_code        TEXT,"
+                + "ticket_priority TEXT"
                 + ")");
     }
 
@@ -81,6 +82,9 @@ public class CrashReportDatabase extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         if (oldVersion < 2) {
             db.execSQL("ALTER TABLE " + TABLE_DEVELOPER + " ADD COLUMN sync_status TEXT");
+        }
+        if (oldVersion < 3) {
+            db.execSQL("ALTER TABLE " + TABLE_CRASH_REPORT + " ADD COLUMN ticket_priority TEXT");
         }
     }
 
@@ -186,6 +190,7 @@ public class CrashReportDatabase extends SQLiteOpenHelper {
             cv.put("device_info",     report.device_info);
             cv.put("crash_report",    report.crash_report);
             cv.put("app_code",        report.app_code);
+            cv.put("ticket_priority", report.ticket_priority);
             db.insert(TABLE_CRASH_REPORT, null, cv);
         }
     }

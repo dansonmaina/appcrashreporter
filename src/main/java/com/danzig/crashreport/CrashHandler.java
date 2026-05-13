@@ -97,16 +97,21 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
             CrashReporterConfig cfg = CrashReporter.config;
 
             // Claude AI analysis — appended to messages before any channel sends
+            String crashPriority = "Unknown";
             if (cfg.enableClaudeAnalysis && !cfg.claudeApiKey.isEmpty()) {
                 String crashSummary = summarizeCrash(stackTrace);
                 String analysis = fetchClaudeAnalysis(crashSummary);
                 if (analysis != null && !analysis.isEmpty()) {
-                    crashMessage += "\n\n🤖 *Claude Analysis:*\n" + analysis;
+                    crashPriority = extractPriority(analysis);
+                    String analysisBody = stripPriorityLine(analysis);
+                    crashMessage += "\n\n" + getPriorityEmoji(crashPriority) + " *Priority: " + crashPriority.toUpperCase() + "*"
+                            + "\n\n🤖 *Claude Analysis:*\n" + analysisBody;
                     emailMessage += "\n\n<b>🤖 Claude Analysis:</b>\n" + analysis;
                 }
             }
 
             // 3. Save to local DB and send to Support Capture to create a ticket
+            report.ticket_priority = crashPriority;
             if (cfg.enableCrashTicket) sendCrashTicket(report, appCode);
 
             // 4. Send to Telegram automatically
@@ -435,13 +440,13 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
 
         new Thread(() -> {
             try {
-                ArrayList<Developer> developers = CrashReportDatabase.getInstance(CrashReporter.appContext).getAllDevelopers();
+                //ArrayList<Developer> developers = CrashReportDatabase.getInstance(CrashReporter.appContext).getAllDevelopers();
 
                 // Testing: use default developer from config
-                //ArrayList<Developer> developers = new ArrayList<>();
-                //if (CrashReporter.config.defaultDeveloper != null) {
-                //    developers.add(CrashReporter.config.defaultDeveloper);
-                //}
+                ArrayList<Developer> developers = new ArrayList<>();
+                if (CrashReporter.config.defaultDeveloper != null) {
+                    developers.add(CrashReporter.config.defaultDeveloper);
+                }
 
                 if (developers == null || developers.isEmpty()) {
                     Log.w("Email", "No developers in local DB — skipping email.");
@@ -556,13 +561,13 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
 
         new Thread(() -> {
             try {
-                ArrayList<Developer> developers = CrashReportDatabase.getInstance(CrashReporter.appContext).getAllDevelopers();
+                //ArrayList<Developer> developers = CrashReportDatabase.getInstance(CrashReporter.appContext).getAllDevelopers();
 
                 // Testing: use default developer from config
-                //ArrayList<Developer> developers = new ArrayList<>();
-                //if (CrashReporter.config.defaultDeveloper != null) {
-                //    developers.add(CrashReporter.config.defaultDeveloper);
-                //}
+                ArrayList<Developer> developers = new ArrayList<>();
+                if (CrashReporter.config.defaultDeveloper != null) {
+                    developers.add(CrashReporter.config.defaultDeveloper);
+                }
 
                 if (developers == null || developers.isEmpty()) {
                     Log.w("CrashReporter", "Maytapi: No developers in DB — skipping.");
@@ -634,9 +639,16 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
     // Static system prompt — identical for every crash, eligible for prompt caching.
     private static final String CLAUDE_SYSTEM_PROMPT =
             "You are a senior Android developer. Analyze the Android crash summary provided and give:\n"
+            + "Priority: [Critical|High|Medium|Low]\n"
             + "1. Root cause: what likely caused this crash (1-2 sentences)\n"
             + "2. Suggested fix: how to resolve it (2-3 sentences)\n\n"
-            + "Be concise and actionable.";
+            + "Priority definitions:\n"
+            + "- Critical: crash on a core flow (login, sync, payment) — app cannot recover\n"
+            + "- High: crash on a main feature but the app can restart\n"
+            + "- Medium: crash on a secondary or edge-case flow\n"
+            + "- Low: rare, minor crash unlikely to affect most users\n\n"
+            + "Always start your response with exactly 'Priority: X' on the very first line, "
+            + "where X is one of: Critical, High, Medium, Low.";
 
     private static String fetchClaudeAnalysis(String crashSummary) {
         String apiKey = CrashReporter.config.claudeApiKey;
@@ -844,18 +856,7 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
                 "              </div>" +
 
                 // ── Claude Analysis Box (green) ──────────────────────────
-                (claudePart.isEmpty() ? "" :
-                "              <div style='margin-top:16px;border-radius:10px;overflow:hidden;'>" +
-                "                <div style='background:#064e3b;padding:12px 18px;" +
-                "font-size:13px;font-weight:700;color:#6ee7b7;" +
-                "letter-spacing:1px;text-transform:uppercase;'>" +
-                "                  🤖 Claude Analysis" +
-                "                </div>" +
-                "                <div style='background:#001f3f;padding:16px 18px 18px;" +
-                "font-size:14px;color:#ffffff;line-height:22px;white-space:pre-wrap;'>" +
-                claudePart +
-                "                </div>" +
-                "              </div>") +
+                (claudePart.isEmpty() ? "" : buildClaudeEmailSection(claudePart)) +
 
                 "              <div style='font-size:14px;color:#6b7280;" +
                 "line-height:20px;margin-top:16px;'>" +
@@ -896,6 +897,30 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
                 "</html>";
     }
 
+
+    private static String buildClaudeEmailSection(String claudePart) {
+        String priority = extractPriority(claudePart);
+        String analysisBody = stripPriorityLine(claudePart);
+        String priorityColor = getPriorityColor(priority);
+        String priorityBadge = "Unknown".equals(priority) ? "" :
+                "<span style='display:inline-block;background:" + priorityColor + ";color:#ffffff;"
+                + "padding:3px 12px;border-radius:12px;font-size:12px;font-weight:700;"
+                + "letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;'>"
+                + priority + "</span><br>";
+
+        return "              <div style='margin-top:16px;border-radius:10px;overflow:hidden;'>"
+                + "<div style='background:#064e3b;padding:12px 18px;"
+                + "font-size:13px;font-weight:700;color:#6ee7b7;"
+                + "letter-spacing:1px;text-transform:uppercase;'>"
+                + "🤖 Claude Analysis"
+                + "</div>"
+                + "<div style='background:#001f3f;padding:16px 18px 18px;"
+                + "font-size:14px;color:#ffffff;line-height:22px;white-space:pre-wrap;'>"
+                + priorityBadge
+                + analysisBody
+                + "</div>"
+                + "</div>";
+    }
 
     // ----------------------------------------------------------
     // Build a CrashReport object from the current crash context
@@ -939,6 +964,7 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
             jsonObject.put("app_version", report.app_version);
             jsonObject.put("device_info", report.device_info);
             jsonObject.put("crash_report", report.crash_report);
+            jsonObject.put("ticket_priority", report.ticket_priority != null ? report.ticket_priority : "Unknown");
 
 
             Log.d(TAG, "CrashTicket REQUEST => " + jsonObject.toString().replace("\\/", "/"));
@@ -991,6 +1017,50 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
 
         } catch (JSONException e) {
             Log.e(TAG, "CrashTicket: Failed to build JSON", e);
+        }
+    }
+
+    private static String extractPriority(String analysis) {
+        if (analysis == null || analysis.isEmpty()) return "Unknown";
+        for (String line : analysis.split("\n")) {
+            String t = line.trim();
+            if (t.toLowerCase().startsWith("priority:")) {
+                String val = t.substring(9).trim();
+                if (val.toLowerCase().contains("critical")) return "Critical";
+                if (val.toLowerCase().contains("high"))     return "High";
+                if (val.toLowerCase().contains("medium"))   return "Medium";
+                if (val.toLowerCase().contains("low"))      return "Low";
+            }
+        }
+        return "Unknown";
+    }
+
+    private static String stripPriorityLine(String analysis) {
+        if (analysis == null) return "";
+        String[] lines = analysis.split("\n", 2);
+        if (lines.length > 0 && lines[0].trim().toLowerCase().startsWith("priority:")) {
+            return lines.length > 1 ? lines[1].trim() : "";
+        }
+        return analysis;
+    }
+
+    private static String getPriorityEmoji(String priority) {
+        switch (priority.toLowerCase()) {
+            case "critical": return "🔴";
+            case "high":     return "🟠";
+            case "medium":   return "🟡";
+            case "low":      return "🟢";
+            default:         return "⚪";
+        }
+    }
+
+    private static String getPriorityColor(String priority) {
+        switch (priority.toLowerCase()) {
+            case "critical": return "#dc2626";
+            case "high":     return "#ea580c";
+            case "medium":   return "#d97706";
+            case "low":      return "#16a34a";
+            default:         return "#6b7280";
         }
     }
 
