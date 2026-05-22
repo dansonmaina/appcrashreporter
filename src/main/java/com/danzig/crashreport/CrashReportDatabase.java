@@ -19,7 +19,7 @@ import java.util.ArrayList;
 public class CrashReportDatabase extends SQLiteOpenHelper {
 
     private static final String DB_NAME    = "danzig_crashreport.db";
-    private static final int    DB_VERSION = 3;
+    private static final int    DB_VERSION = 4;
 
     static final String TABLE_DEVELOPER     = "developer_table";
     static final String TABLE_CRASH_REPORT  = "crash_report_table";
@@ -58,10 +58,12 @@ public class CrashReportDatabase extends SQLiteOpenHelper {
                 + ")");
 
         db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE_TELEGRAM_USER + " ("
-                + "_id       INTEGER PRIMARY KEY AUTOINCREMENT,"
-                + "chatId    TEXT UNIQUE,"
-                + "firstName TEXT,"
-                + "lastName  TEXT"
+                + "_id           INTEGER PRIMARY KEY AUTOINCREMENT,"
+                + "chatId        TEXT UNIQUE,"
+                + "firstName     TEXT,"
+                + "lastName      TEXT,"
+                + "language_code TEXT,"
+                + "sync_status   TEXT DEFAULT 'pending'"
                 + ")");
 
         db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE_CRASH_REPORT + " ("
@@ -85,6 +87,10 @@ public class CrashReportDatabase extends SQLiteOpenHelper {
         }
         if (oldVersion < 3) {
             db.execSQL("ALTER TABLE " + TABLE_CRASH_REPORT + " ADD COLUMN ticket_priority TEXT");
+        }
+        if (oldVersion < 4) {
+            db.execSQL("ALTER TABLE " + TABLE_TELEGRAM_USER + " ADD COLUMN language_code TEXT");
+            db.execSQL("ALTER TABLE " + TABLE_TELEGRAM_USER + " ADD COLUMN sync_status TEXT DEFAULT 'pending'");
         }
     }
 
@@ -155,11 +161,38 @@ public class CrashReportDatabase extends SQLiteOpenHelper {
 
     public void insertOrReplaceTelegramUser(TelegramUser user) {
         ContentValues cv = new ContentValues();
-        cv.put("chatId",    user.chatId);
-        cv.put("firstName", user.firstName);
-        cv.put("lastName",  user.lastName);
+        cv.put("chatId",        user.chatId);
+        cv.put("firstName",     user.firstName);
+        cv.put("lastName",      user.lastName);
+        cv.put("language_code", user.languageCode != null ? user.languageCode : "en");
+        cv.put("sync_status",   user.syncStatus   != null ? user.syncStatus   : "pending");
         getWritableDatabase().insertWithOnConflict(TABLE_TELEGRAM_USER, null, cv,
                 SQLiteDatabase.CONFLICT_REPLACE);
+    }
+
+    public ArrayList<TelegramUser> getUnsyncedTelegramUsers() {
+        ArrayList<TelegramUser> list = new ArrayList<>();
+        try (Cursor c = getReadableDatabase().query(
+                TABLE_TELEGRAM_USER, null,
+                "sync_status != ?", new String[]{"synced"},
+                null, null, null)) {
+            while (c.moveToNext()) {
+                TelegramUser u = new TelegramUser();
+                u.chatId       = c.getString(c.getColumnIndexOrThrow("chatId"));
+                u.firstName    = c.getString(c.getColumnIndexOrThrow("firstName"));
+                u.lastName     = c.getString(c.getColumnIndexOrThrow("lastName"));
+                u.languageCode = c.getString(c.getColumnIndexOrThrow("language_code"));
+                u.syncStatus   = c.getString(c.getColumnIndexOrThrow("sync_status"));
+                list.add(u);
+            }
+        }
+        return list;
+    }
+
+    public void updateTelegramUserSyncStatus(String chatId, String status) {
+        ContentValues cv = new ContentValues();
+        cv.put("sync_status", status);
+        getWritableDatabase().update(TABLE_TELEGRAM_USER, cv, "chatId=?", new String[]{chatId});
     }
 
     public void deleteTelegramUserByChatId(String chatId) {

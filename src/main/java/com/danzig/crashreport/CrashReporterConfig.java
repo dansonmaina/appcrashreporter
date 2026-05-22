@@ -83,6 +83,9 @@ public final class CrashReporterConfig {
     /** Endpoint that receives crash tickets. */
     public final String crashTicketEndpoint;
 
+    /** Endpoint to register Telegram user chat IDs (Support Capture AddChatAssignment). */
+    public final String telegramSyncEndpoint;
+
     // ── API credentials ──────────────────────────────────────────────────────
 
     /** WhatsApp Cloud API permanent token from Meta Developer Console. */
@@ -137,6 +140,7 @@ public final class CrashReporterConfig {
         this.smtpFromAddress        = b.smtpFromAddress;
         this.smtpFromName           = b.smtpFromName;
         this.crashTicketEndpoint    = b.crashTicketEndpoint;
+        this.telegramSyncEndpoint   = b.telegramSyncEndpoint;
         this.whatsappToken          = b.whatsappToken;
         this.whatsappPhoneNumberId  = b.whatsappPhoneNumberId;
         this.telegramBotToken       = b.telegramBotToken;
@@ -169,6 +173,7 @@ public final class CrashReporterConfig {
         private String      smtpFromAddress        = "";
         private String      smtpFromName           = "";
         private String      crashTicketEndpoint    = "";
+        private String      telegramSyncEndpoint   = "";
 
         private String      whatsappToken          = "";
         private String      whatsappPhoneNumberId  = "";
@@ -258,6 +263,11 @@ public final class CrashReporterConfig {
 
         public Builder crashTicketEndpoint(String url) {
             this.crashTicketEndpoint = url != null ? url : "";
+            return this;
+        }
+
+        public Builder telegramSyncEndpoint(String url) {
+            this.telegramSyncEndpoint = url != null ? url : "";
             return this;
         }
 

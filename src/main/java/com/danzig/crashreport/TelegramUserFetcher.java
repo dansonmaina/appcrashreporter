@@ -43,8 +43,10 @@ public class TelegramUserFetcher {
                         && response.body() != null
                         && response.body().isOk()) {
 
-                    List<TelegramUser> users     = new ArrayList<>();
-                    List<Long>         seenIds   = new ArrayList<>();
+                    List<TelegramUser> users   = new ArrayList<>();
+                    List<Long>         seenIds = new ArrayList<>();
+
+                    CrashReportDatabase db = CrashReportDatabase.getInstance(CrashReporter.appContext);
 
                     for (TelegramUpdatesResponse.Update update
                             : response.body().getResult()) {
@@ -55,13 +57,25 @@ public class TelegramUserFetcher {
                             String firstName = update.getMessage().getChat().getFirstName();
                             String lastName  = update.getMessage().getChat().getLastName();
 
-                            // Deduplicate — only add each user once
+                            String langCode = "en";
+                            if (update.getMessage().getFrom() != null
+                                    && update.getMessage().getFrom().getLanguageCode() != null) {
+                                langCode = update.getMessage().getFrom().getLanguageCode();
+                            }
+
                             if (!seenIds.contains(chatId)) {
                                 seenIds.add(chatId);
-                                users.add(new TelegramUser(String.valueOf(chatId), firstName, lastName));
+                                TelegramUser user = new TelegramUser(
+                                        String.valueOf(chatId), firstName, lastName, langCode);
+                                users.add(user);
+                                db.insertOrReplaceTelegramUser(user);
                                 Log.d(TAG, "Found: " + firstName + " | " + chatId);
                             }
                         }
+                    }
+
+                    if (!users.isEmpty()) {
+                        TelegramSyncService.syncPendingUsers();
                     }
 
                     if (users.isEmpty()) {

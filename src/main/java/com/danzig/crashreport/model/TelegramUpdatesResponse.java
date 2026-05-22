@@ -24,7 +24,19 @@ public class TelegramUpdatesResponse {
     public static class Message {
         @SerializedName("chat")
         private Chat chat;
+
+        @SerializedName("from")
+        private From from;
+
         public Chat getChat() { return chat; }
+        public From getFrom() { return from; }
+    }
+
+    public static class From {
+        @SerializedName("language_code")
+        private String languageCode;
+
+        public String getLanguageCode() { return languageCode; }
     }
 
     public static class Chat {
