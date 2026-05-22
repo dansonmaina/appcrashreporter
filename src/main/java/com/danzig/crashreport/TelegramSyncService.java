@@ -5,6 +5,7 @@ import android.util.Log;
 import com.danzig.crashreport.model.TelegramSyncRequest;
 import com.danzig.crashreport.model.TelegramSyncResponse;
 import com.danzig.crashreport.model.TelegramUser;
+import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import retrofit2.Call;
@@ -38,6 +39,8 @@ public class TelegramSyncService {
                 return;
             }
 
+            Gson gson = new Gson();
+
             Retrofit retrofit = new Retrofit.Builder()
                     .baseUrl("https://placeholder.com/")
                     .addConverterFactory(GsonConverterFactory.create())
@@ -55,8 +58,20 @@ public class TelegramSyncService {
                             user.languageCode != null ? user.languageCode : "en"
                     );
 
+                    Log.d(TAG, "──────────────────────────────────────");
+                    Log.d(TAG, "Endpoint : " + endpoint);
+                    Log.d(TAG, "Request  : " + gson.toJson(req));
+
                     Call<TelegramSyncResponse> call = api.syncTelegramUser(endpoint, req);
                     Response<TelegramSyncResponse> response = call.execute();
+
+                    String rawBody = response.body() != null
+                            ? gson.toJson(response.body())
+                            : (response.errorBody() != null ? response.errorBody().string() : "null");
+
+                    Log.d(TAG, "HTTP     : " + response.code());
+                    Log.d(TAG, "Response : " + rawBody);
+                    Log.d(TAG, "──────────────────────────────────────");
 
                     if (response.isSuccessful()
                             && response.body() != null
