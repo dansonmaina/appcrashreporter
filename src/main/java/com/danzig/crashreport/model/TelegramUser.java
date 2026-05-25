@@ -7,6 +7,7 @@ public class TelegramUser implements Serializable {
     public String chatId;
     public String firstName;
     public String lastName;
+    public String username;
     public String languageCode;
     public String syncStatus;
 
@@ -16,6 +17,7 @@ public class TelegramUser implements Serializable {
         this.chatId        = chatId;
         this.firstName     = firstName;
         this.lastName      = lastName;
+        this.username      = null;
         this.languageCode  = "en";
         this.syncStatus    = "pending";
     }
@@ -24,6 +26,16 @@ public class TelegramUser implements Serializable {
         this.chatId        = chatId;
         this.firstName     = firstName;
         this.lastName      = lastName;
+        this.username      = null;
+        this.languageCode  = languageCode != null ? languageCode : "en";
+        this.syncStatus    = "pending";
+    }
+
+    public TelegramUser(String chatId, String firstName, String lastName, String username, String languageCode) {
+        this.chatId        = chatId;
+        this.firstName     = firstName;
+        this.lastName      = lastName;
+        this.username      = username;
         this.languageCode  = languageCode != null ? languageCode : "en";
         this.syncStatus    = "pending";
     }

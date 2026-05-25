@@ -55,6 +55,7 @@ public class TelegramSyncService {
                             chatId,
                             user.firstName,
                             user.lastName,
+                            user.username,
                             user.languageCode != null ? user.languageCode : "en"
                     );
 

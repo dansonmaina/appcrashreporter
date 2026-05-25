@@ -19,7 +19,7 @@ import java.util.ArrayList;
 public class CrashReportDatabase extends SQLiteOpenHelper {
 
     private static final String DB_NAME    = "danzig_crashreport.db";
-    private static final int    DB_VERSION = 4;
+    private static final int    DB_VERSION = 5;
 
     static final String TABLE_DEVELOPER     = "developer_table";
     static final String TABLE_CRASH_REPORT  = "crash_report_table";
@@ -62,6 +62,7 @@ public class CrashReportDatabase extends SQLiteOpenHelper {
                 + "chatId        TEXT UNIQUE,"
                 + "firstName     TEXT,"
                 + "lastName      TEXT,"
+                + "username      TEXT,"
                 + "language_code TEXT,"
                 + "sync_status   TEXT DEFAULT 'pending'"
                 + ")");
@@ -91,6 +92,9 @@ public class CrashReportDatabase extends SQLiteOpenHelper {
         if (oldVersion < 4) {
             db.execSQL("ALTER TABLE " + TABLE_TELEGRAM_USER + " ADD COLUMN language_code TEXT");
             db.execSQL("ALTER TABLE " + TABLE_TELEGRAM_USER + " ADD COLUMN sync_status TEXT DEFAULT 'pending'");
+        }
+        if (oldVersion < 5) {
+            db.execSQL("ALTER TABLE " + TABLE_TELEGRAM_USER + " ADD COLUMN username TEXT");
         }
     }
 
@@ -164,6 +168,7 @@ public class CrashReportDatabase extends SQLiteOpenHelper {
         cv.put("chatId",        user.chatId);
         cv.put("firstName",     user.firstName);
         cv.put("lastName",      user.lastName);
+        cv.put("username",      user.username);
         cv.put("language_code", user.languageCode != null ? user.languageCode : "en");
         cv.put("sync_status",   user.syncStatus   != null ? user.syncStatus   : "pending");
         getWritableDatabase().insertWithOnConflict(TABLE_TELEGRAM_USER, null, cv,
@@ -181,6 +186,7 @@ public class CrashReportDatabase extends SQLiteOpenHelper {
                 u.chatId       = c.getString(c.getColumnIndexOrThrow("chatId"));
                 u.firstName    = c.getString(c.getColumnIndexOrThrow("firstName"));
                 u.lastName     = c.getString(c.getColumnIndexOrThrow("lastName"));
+                u.username     = c.getString(c.getColumnIndexOrThrow("username"));
                 u.languageCode = c.getString(c.getColumnIndexOrThrow("language_code"));
                 u.syncStatus   = c.getString(c.getColumnIndexOrThrow("sync_status"));
                 list.add(u);

@@ -56,6 +56,7 @@ public class TelegramUserFetcher {
                             long   chatId    = update.getMessage().getChat().getId();
                             String firstName = update.getMessage().getChat().getFirstName();
                             String lastName  = update.getMessage().getChat().getLastName();
+                            String username  = update.getMessage().getChat().getUsername();
 
                             String langCode = "en";
                             if (update.getMessage().getFrom() != null
@@ -66,7 +67,7 @@ public class TelegramUserFetcher {
                             if (!seenIds.contains(chatId)) {
                                 seenIds.add(chatId);
                                 TelegramUser user = new TelegramUser(
-                                        String.valueOf(chatId), firstName, lastName, langCode);
+                                        String.valueOf(chatId), firstName, lastName, username, langCode);
                                 users.add(user);
                                 db.insertOrReplaceTelegramUser(user);
                                 Log.d(TAG, "Found: " + firstName + " | " + chatId);
