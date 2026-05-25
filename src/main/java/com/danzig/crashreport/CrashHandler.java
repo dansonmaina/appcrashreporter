@@ -440,13 +440,7 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
 
         new Thread(() -> {
             try {
-                //ArrayList<Developer> developers = CrashReportDatabase.getInstance(CrashReporter.appContext).getAllDevelopers();
-
-                // Testing: use default developer from config
-                ArrayList<Developer> developers = new ArrayList<>();
-                if (CrashReporter.config.defaultDeveloper != null) {
-                    developers.add(CrashReporter.config.defaultDeveloper);
-                }
+                ArrayList<Developer> developers = CrashReportDatabase.getInstance(CrashReporter.appContext).getAllDevelopers();
 
                 if (developers == null || developers.isEmpty()) {
                     Log.w("Email", "No developers in local DB — skipping email.");
@@ -561,13 +555,7 @@ public class CrashHandler implements Thread.UncaughtExceptionHandler {
 
         new Thread(() -> {
             try {
-                //ArrayList<Developer> developers = CrashReportDatabase.getInstance(CrashReporter.appContext).getAllDevelopers();
-
-                // Testing: use default developer from config
-                ArrayList<Developer> developers = new ArrayList<>();
-                if (CrashReporter.config.defaultDeveloper != null) {
-                    developers.add(CrashReporter.config.defaultDeveloper);
-                }
+                ArrayList<Developer> developers = CrashReportDatabase.getInstance(CrashReporter.appContext).getAllDevelopers();
 
                 if (developers == null || developers.isEmpty()) {
                     Log.w("CrashReporter", "Maytapi: No developers in DB — skipping.");
